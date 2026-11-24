@@ -4,7 +4,7 @@ Work **one phase at a time**. Give the AI the phase prompt, check the "done when
 
 | # | Phase | Done when | Covers |
 |---|---|---|---|
-| 0 | Accounts and tools | Shopify Partner account, a dev store, Shopify CLI, and the Shopify AI Toolkit installed; UCI dataset downloaded | — |
+| 0 | Machine, accounts, and data | Every tool in the Phase 0 table reports a version; Shopify Partner account and dev store exist; UCI dataset downloaded | — |
 | 1 | Data cleaning (Python) | Weekly sales table built; cleaning tests pass | S2.1 |
 | 2 | Backtest | Baseline and model WAPE on 500 SKUs × 52 weeks; leakage test passes; summary saved | S2.2–S2.5 |
 | 3 | Model + forecaster service | `model.joblib` trained; FastAPI `POST /forecast` returns predictions; tests pass | S1.5 |
@@ -23,13 +23,28 @@ The **backtest (phases 1–2) needs no Shopify account**, so it's a good place t
 
 Start every session with: *"Read AGENTS.md, docs/SPEC.md, and docs/DESIGN.md first. We are on phase N."*
 
-### Phase 0: Accounts and tools (manual)
-1. Create a Shopify Partner account and a development store (`shopify store create dev` or the Partner Dashboard).
-2. Install Shopify CLI (latest).
+### Phase 0: Machine, accounts, and data (manual, once)
+
+Build on your **personal** computer and personal GitHub account.
+
+| Tool | Why | Check |
+|---|---|---|
+| Git | Version control | `git --version` |
+| Python 3.12 | Data cleaning, backtest, model, forecaster service | `python3 --version` |
+| Ruby 3.3+ and Bundler | The Rails app from the Shopify Ruby template | `ruby -v`, `bundle -v` |
+| Node.js 20+ (LTS) | The template's React + Polaris frontend and Shopify CLI | `node -v` |
+| Shopify CLI (latest) | Scaffolding, `shopify app dev`, installing on the dev store | `shopify version` |
+| Claude Code or Codex CLI | Writing the code phase by phase | `claude --version` / `codex --version` |
+
+On Windows, run everything inside WSL2 (Ubuntu) and keep the repo in the Linux file system (for example `~/code/Shelfwise`), not under `/mnt/c`.
+
+Then:
+1. `git clone https://github.com/CharlieNotChilly/Shelfwise.git` and `cd Shelfwise`.
+2. Create a Shopify Partner account and a development store (`shopify store create dev` or the Partner Dashboard).
 3. Install the Shopify AI Toolkit for your assistant:
    - Claude Code: `claude plugin install shopify-ai-toolkit@claude-plugins-official`
    - Codex: `codex plugin add shopify@openai-curated`
-4. Download `online_retail_II.xlsx` from the UCI Machine Learning Repository into `forecaster/data/raw/` (add `forecaster/data/` to `.gitignore`).
+4. Download `online_retail_II.xlsx` from the UCI Machine Learning Repository into `forecaster/data/raw/`, and add `forecaster/data/` and `forecaster/models/*.joblib` to `.gitignore` (create it if needed) so the raw dataset and model files are never committed.
 
 ### Phase 1: Data cleaning
 ```

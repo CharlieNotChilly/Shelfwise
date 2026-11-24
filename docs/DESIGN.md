@@ -4,6 +4,20 @@
 
 Small merchants run out of stock on their best sellers because they reorder by gut feel. Shelfwise forecasts weekly demand per product and warns the merchant, inside the Shopify admin, before a product runs out.
 
+## Goals and non-goals
+
+**Goals**
+- An embedded Shopify app on a dev store that shows per-SKU days until stockout and flags at-risk products.
+- A dev store seeded with 1,000 real UCI invoices, synced through bulk operations and webhooks within rate limits.
+- A rolling-origin backtest on the top 500 SKUs over 12 months, comparing a gradient-boosted model to a moving-average baseline with WAPE.
+- Evidence for every claim, saved in `results/`.
+
+**Non-goals** (do not build these)
+- Automatic purchase orders, supplier integration, or reorder emails.
+- Public App Store listing, billing, or multi-store support.
+- Per-SKU model tuning, deep learning, or external data (weather, holidays) beyond the features in this document.
+- Production hosting; the app runs through `shopify app dev` and the forecaster runs locally.
+
 ## Repository layout
 
 ```
