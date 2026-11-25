@@ -1,0 +1,20 @@
+[project]
+name = "shelfwise-forecaster"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pandas",
+    "openpyxl",
+    "pyarrow",
+    "lightgbm",
+    "scikit-learn",
+    "joblib",
+    "fastapi",
+    "uvicorn",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.setuptools]
+py-modules = ["data_prep"]
