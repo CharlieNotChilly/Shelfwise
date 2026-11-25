@@ -6,15 +6,15 @@ dependencies = [
     "pandas",
     "openpyxl",
     "pyarrow",
-    "lightgbm",
-    "scikit-learn",
-    "joblib",
+    "lightgbm==4.7.0",
+    "scikit-learn==1.9.1",
+    "joblib==1.6.0",
     "fastapi",
     "uvicorn",
 ]
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = ["pytest", "httpx2"]
 
 [tool.setuptools]
-py-modules = ["data_prep", "features", "backtest"]
+py-modules = ["data_prep", "features", "backtest", "train", "service"]

@@ -25,13 +25,11 @@ def select_skus(weekly: pd.DataFrame, cutoff: pd.Timestamp, count: int) -> pd.In
     return ranked.index[:count]
 
 
-def run_backtest(weekly: pd.DataFrame, weeks: pd.DatetimeIndex = TEST_WEEKS,
-                 sku_count: int = SKU_COUNT) -> pd.DataFrame:
-    skus = select_skus(weekly, weeks[0], sku_count)
-    sales = weekly.loc[weekly["stock_code"].isin(skus) & (weekly["week_start"] <= weeks[-1])]
+def training_panel(weekly: pd.DataFrame, skus: pd.Index, last_week: pd.Timestamp):
+    sales = weekly.loc[weekly["stock_code"].isin(skus) & (weekly["week_start"] <= last_week)]
     by_week = sales.set_index("week_start").sort_index()
     first_target = by_week.index.min() + HISTORY_WEEKS * WEEK
-    targets = pd.date_range(first_target, weeks[-1], freq="W-MON")
+    targets = pd.date_range(first_target, last_week, freq="W-MON")
     feature_rows = {}
     for target in targets:
         history = by_week.loc[target - HISTORY_WEEKS * WEEK : target - WEEK].reset_index()
@@ -42,6 +40,20 @@ def run_backtest(weekly: pd.DataFrame, weeks: pd.DatetimeIndex = TEST_WEEKS,
     actuals = sales.set_index(["week_start", "stock_code"])["units"].reindex(expected)
     if not features.index.equals(expected) or actuals.isna().any():
         raise ValueError("Missing SKU-week observations in the backtest panel")
+    return features, actuals
+
+
+def demand_model() -> LGBMRegressor:
+    return LGBMRegressor(
+        objective="regression_l1", n_estimators=100, learning_rate=0.1,
+        num_leaves=31, random_state=42, n_jobs=1, verbosity=-1,
+    )
+
+
+def run_backtest(weekly: pd.DataFrame, weeks: pd.DatetimeIndex = TEST_WEEKS,
+                 sku_count: int = SKU_COUNT) -> pd.DataFrame:
+    skus = select_skus(weekly, weeks[0], sku_count)
+    features, actuals = training_panel(weekly, skus, weeks[-1])
 
     month = None
     predictions = []
@@ -50,10 +62,7 @@ def run_backtest(weekly: pd.DataFrame, weeks: pd.DatetimeIndex = TEST_WEEKS,
         if target.to_period("M") != month:
             month = target.to_period("M")
             training = origins < target
-            model = LGBMRegressor(
-                objective="regression_l1", n_estimators=100, learning_rate=0.1,
-                num_leaves=31, random_state=42, n_jobs=1, verbosity=-1,
-            )
+            model = demand_model()
             model.fit(features.loc[training], actuals.loc[training])
 
         current = features.xs(target, drop_level=False)
