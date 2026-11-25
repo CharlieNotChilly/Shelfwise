@@ -17,4 +17,4 @@ dependencies = [
 test = ["pytest"]
 
 [tool.setuptools]
-py-modules = ["data_prep"]
+py-modules = ["data_prep", "features", "backtest"]

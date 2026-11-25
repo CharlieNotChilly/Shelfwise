@@ -42,6 +42,8 @@ docs/           SPEC, DESIGN, PLAN
 Columns: `Invoice`, `StockCode`, `Description`, `Quantity`, `InvoiceDate`, `Price`, `Customer ID`, `Country`. Two sheets: 2009–2010 and 2010–2011.
 
 **Cleaning rules (unit-tested):**
+When combining the two sheets, match identical lines on all eight source columns. Keep the larger of the two occurrence counts for each line. This counts the December 2010 overlap once and preserves repeated lines within a sheet.
+
 1. Drop cancellations: `Invoice` starting with `C`.
 2. Drop rows with `Quantity <= 0` or `Price <= 0`.
 3. Drop non-product codes: `StockCode` values that don't start with a digit (e.g., `POST`, `DOT`, `M`, `BANK CHARGES`, `AMAZONFEE`, `C2`, `D`, `S`, `PADS`).
@@ -52,8 +54,10 @@ Columns: `Invoice`, `StockCode`, `Description`, `Quantity`, `InvoiceDate`, `Pric
 
 - **Training period:** weeks before 2010-12-06. **Test window:** 52 weeks starting 2010-12-06.
 - **SKU selection:** top 500 StockCodes by units sold in the training period only.
-- **Rolling origin:** for each test week `t`, train on weeks `< t` and predict week `t`. Retrain at the start of each month to keep run time reasonable.
+- **Rolling origin:** refit on the first forecast Monday of each month using only weeks before that Monday, including completed test-window weeks. Refresh features before every weekly forecast. Freeze SKU selection and model settings before the test window.
 - **Features** (all from weeks before `t`): lags 1, 2, 3, 4, 8; rolling mean and std over 4 and 8 weeks; week of year; month; average price over the last 4 weeks; weeks since last sale. Lags stop at 8 weeks so the same model works on the store's 8 weeks of history.
+- The ISO week and month refer to the forecast Monday and are known in advance. Rolling standard deviations use the sample definition. The price feature averages weekly mean prices from selling weeks in the last four weeks and is missing if none had sales. Sale recency is 1 for a sale last week and 9 for no sale in the eight-week history. Only targets with eight weeks of history enter training.
+- **Model settings:** one LightGBM regressor with absolute-error loss, 100 trees, learning rate 0.1, 31 leaves, seed 42 and one thread. Clip negative demand predictions to zero. Absolute error matches the numerator of WAPE.
 - **Baseline:** mean of the previous 4 weeks.
 - **Metric:** WAPE = Σ|actual − forecast| ÷ Σ actual over all (SKU, week) pairs. Report baseline and model on identical pairs.
 - **Leakage guard:** a test that builds features for a given week and asserts every source row is from an earlier week.

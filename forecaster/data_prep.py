@@ -10,7 +10,9 @@ DATA_DIR = Path(__file__).resolve().parent / "data"
 WORKBOOK = DATA_DIR / "raw" / "online_retail_II.xlsx"
 WEEKLY_SALES = DATA_DIR / "processed" / "weekly_sales.parquet"
 SHEETS = ["Year 2009-2010", "Year 2010-2011"]
-SOURCE_COLUMNS = ["Invoice", "StockCode", "Description", "Quantity", "InvoiceDate", "Price"]
+SOURCE_COLUMNS = [
+    "Invoice", "StockCode", "Description", "Quantity", "InvoiceDate", "Price", "Customer ID", "Country"
+]
 
 
 def weekly_sales(lines: pd.DataFrame) -> pd.DataFrame:
@@ -53,7 +55,11 @@ def build_weekly_sales(workbook: Path = WORKBOOK, output: Path = WEEKLY_SALES) -
         na_values=[""],
         engine="openpyxl",
     )
-    weekly = weekly_sales(pd.concat(sheets.values(), ignore_index=True))
+    # Pair the nth identical line in one sheet with the nth in the other.
+    for sheet in sheets.values():
+        sheet["occurrence"] = sheet.groupby(SOURCE_COLUMNS, sort=False, dropna=False).cumcount()
+    lines = pd.concat(sheets.values(), ignore_index=True).drop_duplicates()
+    weekly = weekly_sales(lines)
     output.parent.mkdir(parents=True, exist_ok=True)
     # Publish only a finished Parquet file, including on repeated runs.
     with TemporaryDirectory(dir=output.parent) as temporary:

@@ -13,6 +13,8 @@ def sale():
         "Quantity": 2,
         "InvoiceDate": pd.Timestamp("2010-01-04 10:00"),
         "Price": 3.0,
+        "Customer ID": None,
+        "Country": "United Kingdom",
     }
 
 
@@ -73,3 +75,17 @@ def test_s21_combines_both_sheets_and_writes_parquet(sale, tmp_path):
     assert list(weekly.itertuples(index=False, name=None)) == [
         ("00123A", pd.Timestamp("2010-01-04"), 6, 5.0)
     ]
+
+
+def test_s21_overlap_preserves_within_sheet_multiplicity_and_distinct_lines(sale, tmp_path):
+    workbook = tmp_path / "overlap.xlsx"
+    output = tmp_path / "weekly.parquet"
+    other = {**sale, "Country": "France"}
+    distinct_customer = {**sale, "Customer ID": 42}
+    with pd.ExcelWriter(workbook, engine="openpyxl") as writer:
+        pd.DataFrame([sale, sale, other]).to_excel(writer, sheet_name="Year 2009-2010", index=False)
+        pd.DataFrame([sale, other, other, distinct_customer]).to_excel(
+            writer, sheet_name="Year 2010-2011", index=False
+        )
+    build_weekly_sales(workbook, output)
+    assert pd.read_parquet(output)["units"].tolist() == [10]
