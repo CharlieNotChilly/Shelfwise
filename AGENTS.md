@@ -10,7 +10,7 @@ This project backs specific résumé claims. Correctness and honesty matter more
 
 ## While writing code
 - Follow the data model, endpoints, cleaning rules, and backtest definition in DESIGN.md exactly.
-- Never use test-window data for training, SKU selection, feature scaling, or tuning.
+- Fix SKU selection, feature scaling (if used), and model settings before the test window. At each monthly rolling-origin refit, training may include completed test-window weeks strictly before the forecast week. Use only observations available before each weekly forecast.
 - Respect Shopify limits: at most 5 new orders per minute on the dev store, and every GraphQL call goes through the cost-aware client.
 - Every phase ends with tests for its spec criteria (the IDs in SPEC.md). Run them and show the output.
 - Never commit API secrets, access tokens, or the raw dataset.
